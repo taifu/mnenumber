@@ -4,6 +4,18 @@
 # Estrae mnemonici da numeri
 #
 
+r"""
+>>> x = memo(77)
+>>> len(x)
+17
+>>> x[0] == ('cacao',)
+True
+>>> x[-1] == ('kaki',)
+True
+>>>
+"""
+
+
 import re
 import functools
 
@@ -15,7 +27,7 @@ mnemos = {
         '4': "r|rr",
         '5': "l|ll|gli",
         '6': "(?:c|cc|g|gg)[ei]",
-        '7': "k|q|(?:[cg][aou])|(?:[cg]h[ei])",
+        '7': "k|kk|q|qq|(?:[cg]{1,2}(?=[aou]))|(?:[cg]{1,2}h(?=[ei]))",
         '8': "f|ff|v|vv",
         '9': "b|bb|p|pp",
         }
@@ -52,10 +64,11 @@ def buildregex(number):
     for letter in number:
         regex += "(?:" + mnemos[letter] + ")" + middle
     regex = regex[:-1] + "*$"
-    return re.compile(regex)
+    return regex
 
 @memoized
 def find(regex, extended):
+    regex = re.compile(regex)
     words = []
     for word in (vocabulary_ext if extended else vocabulary):
         if regex.match(word):
@@ -68,7 +81,7 @@ def memo(number, stop_first=True, extended=False):
     if not number.isdigit():
         raise Exception("'{0}' isn't a number".format(number))
     results = []
-    for l in xrange(len(number), (1 if len(number) > 1 else 0), -1):
+    for l in xrange(len(number), 0, -1):
         first, rest = number[:l], number[l:]
         regex = buildregex(first)
         words = find(regex, extended)
@@ -84,10 +97,15 @@ def memo(number, stop_first=True, extended=False):
 
 if __name__ == "__main__":
     import sys
-    stop_first = not ('-a' in sys.argv)
-    extended = ('-e' in sys.argv)
-    for number in sys.argv[1:]:
-        if number.isdigit():
-            print("{0}:".format(number))
-            for m in memo(number, stop_first, extended):
-                print("\t{0}".format(" ".join(m)))
+    verbose = ("-v", "") in sys.argv
+    if "-t" in sys.argv:
+        import doctest
+        doctest.testmod(verbose=verbose)
+    else:
+        stop_first = not ('-a' in sys.argv)
+        extended = ('-e' in sys.argv)
+        for number in sys.argv[1:]:
+            if number.isdigit():
+                print("{0}:".format(number))
+                for m in memo(number, stop_first, extended):
+                    print("\t{0}".format(" ".join(m)))
